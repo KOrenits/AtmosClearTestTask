@@ -1,9 +1,16 @@
 
+using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+
+builder.Services.AddDbContext<TestTaskDbContext>(options =>
+{
+    options.UseInMemoryDatabase("InMemoryDb");
+});
+
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -17,9 +24,9 @@ builder.Services.AddSwaggerGen(o =>
         Description = "New Swagger document",
         Version = "v1"
     });
-    var fileName = Assembly.GetExecutingAssembly().GetName().Name + ".xml";
-    var filePath = Path.Combine(AppContext.BaseDirectory, fileName);
-    o.IncludeXmlComments(filePath);
+    //var fileName = Assembly.GetExecutingAssembly().GetName().Name + ".xml";
+    //var filePath = Path.Combine(AppContext.BaseDirectory, fileName);
+    //o.IncludeXmlComments(filePath);
 });
 
 var app = builder.Build();

@@ -1,8 +1,6 @@
-﻿using DocumentFormat.OpenXml.Drawing.Diagrams;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace TestTask.Controllers
 {
@@ -10,56 +8,70 @@ namespace TestTask.Controllers
     [ApiController]
     public class HomeController : ControllerBase
     {
-        private static List<Task> tasks = new List<Task>();
+        private readonly TestTaskDbContext _testTaskDbContext;
+        public HomeController(TestTaskDbContext testTaskDbContext)
+        {
+            _testTaskDbContext = testTaskDbContext;
+        }
 
         [HttpPost("createTask")]
         public IActionResult CreateTask([FromQuery] string title, [FromQuery] string description)
-        {   
-            // Create a new task with the input data
-            var newTask = new Task
-            {
-                Id = GenerateUiniqueId(),
-                Title = title,
-                Description = description,
-            };
-            tasks.Add(newTask);
-
-            return Ok(newTask);
-        }
-
-        private int GenerateUiniqueId()
         {
-            return tasks.Count + 1;
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            // Create a new task with the input data
+            var newTask = new CustomTask
+            {
+                Title = title,
+                Description = description
+            };
+            
+
+            // Add the new task to the database context
+            _testTaskDbContext.Tasks.Add(newTask);
+
+            // Save changes to the database
+            _testTaskDbContext.SaveChanges();
+
+            return Ok(_testTaskDbContext.Tasks);
         }
 
         [HttpGet("getAllTasks")]
         public IActionResult GetTasks()
         {
-            if (tasks.Count == 0)
+            if (!_testTaskDbContext.Tasks.Any())
             {
                 return BadRequest("There are no tasks created");
             }
 
-            return Ok(tasks);
+            return Ok(_testTaskDbContext.Tasks);
         }
 
         [HttpGet("getTaskById")]
         public IActionResult GetTaskById([FromQuery] int id)
         {
-            if (tasks.Count == 0)
+            if (!_testTaskDbContext.Tasks.Any())
             {
                 return BadRequest("There are no tasks created");
             }
 
-            var existingTask = tasks.FirstOrDefault(t => t.Id == id); = tasks.FirstOrDefault(t => t.Id == id);
+            var existingTask = _testTaskDbContext.Tasks.FirstOrDefault(t => t.Id == id);
 
-            return Ok(task);
+            return Ok(existingTask);
         }
 
         [HttpPut("updateTaskById")]
         public IActionResult UpdateTask([FromQuery] int id, [FromQuery] string title, [FromQuery] string description)
         {
-            var existingTask = tasks.FirstOrDefault(t => t.Id == id);
+            if (!_testTaskDbContext.Tasks.Any())
+            {
+                return BadRequest("There are no tasks created");
+            }
+
+            var existingTask = _testTaskDbContext.Tasks.FirstOrDefault(t => t.Id == id);
 
             if (existingTask == null)
             {
@@ -69,23 +81,29 @@ namespace TestTask.Controllers
             existingTask.Title = title;
             existingTask.Description = description;
 
+            _testTaskDbContext.SaveChanges();
+
             return Ok(existingTask);
         }
 
         [HttpDelete("deleteTaskById")]
         public IActionResult DeleteTask([FromQuery] int id)
         {
+            if (!_testTaskDbContext.Tasks.Any())
+            {
+                return BadRequest("There are no tasks created");
+            }
             // Find the task with the specified ID
-            var existingTask = tasks.FirstOrDefault(t => t.Id == id);
+            var deletedTask = _testTaskDbContext.Tasks.FirstOrDefault(t => t.Id == id);
 
-            if (existingTask == null)
+            if (deletedTask == null)
             {
                 return NotFound("Task not found with the specified ID.");
             }
 
-            tasks.Remove(existingTask);
+            _testTaskDbContext.Tasks.Remove(deletedTask);
 
-            return Ok("task with Id " + existingTask.Id + "has been removed");
+            return Ok("task with Id " + deletedTask.Id + "has been removed");
         }
     }
 }

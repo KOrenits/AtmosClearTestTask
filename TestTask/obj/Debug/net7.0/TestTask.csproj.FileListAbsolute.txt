@@ -31,7 +31,6 @@ C:\Users\karli\Documents\GitHub\AtmosClearTestTask\TestTask\obj\Debug\net7.0\ref
 C:\Users\karli\Documents\GitHub\AtmosClearTestTask\TestTask\obj\Debug\net7.0\TestTask.pdb
 C:\Users\karli\Documents\GitHub\AtmosClearTestTask\TestTask\obj\Debug\net7.0\TestTask.genruntimeconfig.cache
 C:\Users\karli\Documents\GitHub\AtmosClearTestTask\TestTask\obj\Debug\net7.0\ref\TestTask.dll
-C:\Users\karli\Documents\GitHub\AtmosClearTestTask\TestTask\bin\Debug\net7.0\TestTask.xml
-C:\Users\karli\Documents\GitHub\AtmosClearTestTask\TestTask\obj\Debug\net7.0\TestTask.xml
-C:\Users\karli\Documents\GitHub\AtmosClearTestTask\TestTask\bin\Debug\net7.0\DocumentFormat.OpenXml.dll
-C:\Users\karli\Documents\GitHub\AtmosClearTestTask\TestTask\bin\Debug\net7.0\System.IO.Packaging.dll
+C:\Users\karli\Documents\GitHub\AtmosClearTestTask\TestTask\bin\Debug\net7.0\Microsoft.EntityFrameworkCore.dll
+C:\Users\karli\Documents\GitHub\AtmosClearTestTask\TestTask\bin\Debug\net7.0\Microsoft.EntityFrameworkCore.Abstractions.dll
+C:\Users\karli\Documents\GitHub\AtmosClearTestTask\TestTask\bin\Debug\net7.0\Microsoft.EntityFrameworkCore.InMemory.dll
