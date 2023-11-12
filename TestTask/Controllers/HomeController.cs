@@ -119,7 +119,7 @@ namespace TestTask.Controllers
             try
             {
                 FindTasks(_testTaskDbContext.Tasks);
-                var taskToBeUpdated = _testTaskDbContext.Tasks.FirstOrDefault(t => t.Id == id);
+                var taskToBeUpdated = FindTaskById(_testTaskDbContext.Tasks, id);
                 ValidateRequiredInput(title, "Title is required");
                 ValidateRequiredInput(description, "Description is required");
                 ValidateTitleDublication(_testTaskDbContext.Tasks, title);
