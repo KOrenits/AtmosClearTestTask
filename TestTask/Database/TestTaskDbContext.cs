@@ -9,9 +9,4 @@ public class TestTaskDbContext : DbContext
     }
 
     public DbSet<CustomTask> Tasks { get; set; }
-
-    internal int Count()
-    {
-        throw new NotImplementedException();
-    }
 }

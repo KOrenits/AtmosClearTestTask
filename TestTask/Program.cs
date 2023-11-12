@@ -20,16 +20,17 @@ builder.Services.AddSwaggerGen(o =>
     o.SwaggerDoc("v1",
     new Microsoft.OpenApi.Models.OpenApiInfo
     {
-        Title = "New Swagger",
-        Description = "New Swagger document",
+        Title = "Test Task",
+        Description = "AtmosClear test Task ",
         Version = "v1"
     });
-    //var fileName = Assembly.GetExecutingAssembly().GetName().Name + ".xml";
-    //var filePath = Path.Combine(AppContext.BaseDirectory, fileName);
-    //o.IncludeXmlComments(filePath);
 });
 
 var app = builder.Build();
+
+app.UseHttpsRedirection();
+
+app.UseAuthorization();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -37,10 +38,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
 
 app.MapControllers();
 

@@ -1,6 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Threading.Tasks;
+using static TestTask.CustomExceptions;
 
 namespace TestTask.Controllers
 {
@@ -9,158 +13,198 @@ namespace TestTask.Controllers
     public class HomeController : ControllerBase
     {
         private readonly TestTaskDbContext _testTaskDbContext;
+        private ApiResponse ApiResponse { get; set; }
+
         public HomeController(TestTaskDbContext testTaskDbContext)
         {
             _testTaskDbContext = testTaskDbContext;
+            ApiResponse = new ApiResponse();
         }
 
         [HttpPost("createTask")]
         public IActionResult CreateTask([FromQuery] string? title, [FromQuery] string? description)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
+                // Validate if title and description are not empty
+                ValidateRequiredInput(title, "Title is required");
+                ValidateRequiredInput(description, "Description is required");
+                // Validate if there is already task with same title
+                ValidateTitleDublication(_testTaskDbContext.Tasks, title);
+
+                // Create a new task with the input data
+                var newTask = new CustomTask
+                {
+                    Title = title,
+                    Description = description
+                };
+
+                // Add the new task to the database context
+                _testTaskDbContext.Tasks.Add(newTask);
+                // Save changes to the database
+                _testTaskDbContext.SaveChanges();
+
+                // here we create Api response
+                this.ApiResponse.Message = "Added task";
+                this.ApiResponse.Data = newTask;
+ 
+                return Ok(this.ApiResponse);
             }
-
-            if(title == null)
+            //custom exceptions
+            catch (CustomBadRequestException ex)
             {
-                return BadRequest("Title is required");
+                return BadRequest(ex.Message);
             }
-            if (description == null)
+            //other exceptions
+            catch (Exception ex)
             {
-                return BadRequest("Description is required");
+                return BadRequest(ex.Message);
             }
-
-            if (_testTaskDbContext.Tasks.Any(t => t.Title == title))
-            {
-                return BadRequest("A task with the same title already exists");
-            }
-
-            // Create a new task with the input data
-            var newTask = new CustomTask
-            {
-                Title = title,
-                Description = description
-            };
-            
-            // Add the new task to the database context
-            _testTaskDbContext.Tasks.Add(newTask);
-
-            // Save changes to the database
-            _testTaskDbContext.SaveChanges();
-
-            var response = new
-            {
-                Message = "Added task",
-                Data = newTask
-            };
-            return Ok(response);
         }
 
-        [HttpGet("getAllTasks")]
+        [HttpPost("getAllTTasks")]
         public IActionResult GetTasks()
         {
-            if (!_testTaskDbContext.Tasks.Any())
+            try
             {
-                return BadRequest("There are no tasks created");
-            }
+                // Find if there are any tasks created
+                FindTasks(_testTaskDbContext.Tasks);
 
-            var response = new
+                this.ApiResponse.Message = "List of all Tasks";
+                this.ApiResponse.Data = _testTaskDbContext.Tasks;
+
+                return Ok(this.ApiResponse);
+            }
+            //custom exceptions
+            catch (CustomBadRequestException ex)
             {
-                Message = "List of all Tasks",
-                Data = _testTaskDbContext.Tasks
-            };
-            return Ok(response);
+                return BadRequest(ex.Message);
+            }
+            //other exceptions
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpGet("getTaskById")]
         public IActionResult GetTaskById([FromQuery] int id)
         {
-            if (!_testTaskDbContext.Tasks.Any())
+            try
             {
-                return BadRequest("There are no tasks created");
+                FindTasks(_testTaskDbContext.Tasks);
+                // Find if there is task by id input value
+                var taskWithSpecifiedId = FindTaskById(_testTaskDbContext.Tasks, id);
+
+                this.ApiResponse.Message = "Founded Task";
+                this.ApiResponse.Data = taskWithSpecifiedId;
+
+                return Ok(this.ApiResponse);
             }
-
-            var foundedTask = _testTaskDbContext.Tasks.FirstOrDefault(t => t.Id == id);
-
-            var response = new
+            //custom exceptions
+            catch (CustomBadRequestException ex)
             {
-                Message = "Founded Task",
-                Data = foundedTask
-            };
-            return Ok(response);
+                return BadRequest(ex.Message);
+            }
+            //other exceptions
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPut("updateTaskById")]
         public IActionResult UpdateTask([FromQuery] int id, [FromQuery] string? title, [FromQuery] string? description)
         {
-            if (!_testTaskDbContext.Tasks.Any())
+            try
             {
-                return BadRequest("There are no tasks created");
+                FindTasks(_testTaskDbContext.Tasks);
+                var taskToBeUpdated = _testTaskDbContext.Tasks.FirstOrDefault(t => t.Id == id);
+                ValidateRequiredInput(title, "Title is required");
+                ValidateRequiredInput(description, "Description is required");
+                ValidateTitleDublication(_testTaskDbContext.Tasks, title);
+
+                taskToBeUpdated.Title = title;
+                taskToBeUpdated.Description = description;
+
+                _testTaskDbContext.SaveChanges();
+                this.ApiResponse.Message = "Updated Task";
+                this.ApiResponse.Data = taskToBeUpdated;
+
+                return Ok(this.ApiResponse);
             }
-
-            var previousTask = _testTaskDbContext.Tasks.FirstOrDefault(t => t.Id == id);
-
-            if (previousTask== null)
+            //custom exceptions
+            catch (CustomBadRequestException ex)
             {
-                return NotFound("Task not found with the specified ID.");
+                return BadRequest(ex.Message);
             }
-
-            if (title == null)
+            //other exceptions
+            catch (Exception ex)
             {
-                return BadRequest("Title is required");
+                return BadRequest(ex.Message);
             }
-            if (description == null)
-            {
-                return BadRequest("Description is required");
-            }
-
-
-            if (_testTaskDbContext.Tasks.Any(t => t.Title == title))
-            {
-                return BadRequest("A task with the same title already exists");
-            }
-
-            var updatedTask = previousTask;
-            updatedTask.Title = title;
-            updatedTask.Description = description;
-
-            _testTaskDbContext.SaveChanges();
-
-            var response = new
-            {   
-                PreviousMessage = "Task before Update",
-                PreviousData = previousTask,
-                Message = "Updated Tas Datk",
-                Data = updatedTask
-            };
-            return Ok(response);
         }
 
         [HttpDelete("deleteTaskById")]
         public IActionResult DeleteTask([FromQuery] int id)
         {
-            if (!_testTaskDbContext.Tasks.Any())
+            try
             {
-                return BadRequest("There are no tasks created");
+                FindTasks(_testTaskDbContext.Tasks);
+                var deletedTask = FindTaskById(_testTaskDbContext.Tasks, id);
+
+                _testTaskDbContext.Tasks.Remove(deletedTask);
+                _testTaskDbContext.SaveChanges();
+
+                this.ApiResponse.Message = "This task has been deleted";
+                this.ApiResponse.Data = deletedTask;
+
+                return Ok(this.ApiResponse);
             }
-            // Find the task with the specified ID
-            var deletedTask = _testTaskDbContext.Tasks.FirstOrDefault(t => t.Id == id);
-
-            if (deletedTask == null)
+            //custom exceptions
+            catch (CustomBadRequestException ex) 
             {
-                return NotFound("Task not found with the specified ID.");
+                return BadRequest(ex.Message);
             }
-
-            _testTaskDbContext.Tasks.Remove(deletedTask);
-            _testTaskDbContext.SaveChanges();
-
-            var response = new
+            //other exceptions
+            catch (Exception ex) 
             {
-                Message = "This task has been deleted",
-                Data = deletedTask
-            };
-            return Ok(response);
+                  return BadRequest(ex.Message);
+            }
+        }
+
+        // 
+        public static void ValidateRequiredInput(string? value, string errorMessage)
+        {
+            if (value == null)
+            {
+                throw new CustomBadRequestException(errorMessage);
+            }
+        }
+
+        public static void ValidateTitleDublication(DbSet<CustomTask> taskList, string title)
+        {
+            if (taskList.Any(t => t.Title == title))
+            {
+                throw new CustomBadRequestException("A task with the same title already exists");
+            }
+        }
+        public static CustomTask FindTaskById(DbSet<CustomTask> taskList, int id)
+        {
+            var task = taskList.FirstOrDefault(t => t.Id == id);
+            if (task == null)
+            {
+                throw new CustomBadRequestException("There is no task with the specified Id");
+            }
+            return task;
+        }
+
+        public static void FindTasks(DbSet<CustomTask> taskList)
+        {
+            if (!taskList.Any())
+            {
+                throw new CustomBadRequestException("There are no tasks created");
+            }
         }
     }
 }
